@@ -2127,20 +2127,24 @@ object StartForm: TStartForm
     FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}
   Menu = MainMenu
   Position = poScreenCenter
-  OnCreate = FormCreate
   OnResize = FormResize
+  OnShow = FormShow
   TextHeight = 15
-  object PaintBox: TPaintBox
+  object BoardBox: TPaintBox
     Left = 0
     Top = 0
-    Width = 853
-    Height = 458
-    Align = alClient
-    OnClick = PaintBoxClick
-    OnMouseMove = PaintBoxMouseMove
-    OnPaint = PaintBoxPaint
-    ExplicitWidth = 849
-    ExplicitHeight = 833
+    Width = 849
+    Height = 833
+    Cursor = crHandPoint
+    OnClick = BoardBoxClick
+    OnPaint = BoardBoxPaint
+  end
+  object ScrollBox1: TScrollBox
+    Left = 0
+    Top = 0
+    Width = 845
+    Height = 450
+    TabOrder = 0
   end
   object MainMenu: TMainMenu
     Left = 824
