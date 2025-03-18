@@ -13,8 +13,7 @@ type
         Case isFigure: Boolean Of
             true:
                 (Figure: TFigures;
-                Color: TFigureColors;
-                Pointer: TImage;)
+                Color: TFigureColors;)
         end;
     TBoardMatrix = Array Of Array Of TCell;
 
@@ -28,9 +27,12 @@ const StartBoard: Array [0..7, 0..7] Of TFigures = (
     (FPawn, FPawn, FPawn, FPawn, FPawn, FPawn, FPawn, FPawn),
     (FRook, FKnight, FBishop, FQueen, FKing, FBishop, FKnight, FRook)
 );
+
 const let: array [TFigureColors, TFigures] of string =
     (('wp', 'wr', 'wn', 'wb', 'wq', 'wk', ''),
      ('bp', 'br', 'bn', 'bb', 'bq', 'bk', ''));
+
+var pieces: array [TFigureColors, TFigures] of TImage;
 
 Function Min(A, B: Integer): Integer;
 

@@ -5,7 +5,7 @@ Interface
 Uses
     Global, Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
     System.Classes, Vcl.Graphics,
-    Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls, GameUnit,
+    Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
     Vcl.Menus, Vcl.Imaging.pngimage;
 
 Type
@@ -24,13 +24,15 @@ Type
         RulesMenuBtn: TMenuItem;
         BoardBox: TPaintBox;
         SettingsMainBtn: TMenuItem;
-    ScrollBox1: TScrollBox;
         Procedure BoardBoxPaint(Sender: TObject);
         Procedure FormResize(Sender: TObject);
         Function GetIndexOfCell(Const Points: TPoint): TPoint;
         Procedure BoardBoxClick(Sender: TObject);
         Procedure CreateGameBoard;
+        Procedure getWays(x, y: integer);
+        Procedure setWaysEmpty;
     procedure FormShow(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
     Private
         BoardWidth, CellWidth: Integer;
         Board: TBoardMatrix;
@@ -44,9 +46,9 @@ Const
 
 Var
     StartForm: TStartForm;
-    BOARD_COLORS: Array [TFigureColors] Of Integer = (
-        ClWhite,
-        ClWebCadetBlue
+    BOARD_COLORS: Array [Boolean, TFigureColors] Of Integer = (
+        (ClWhite, ClWebCadetBlue),
+        (clWebLightCoral, clWebBrown)
     );
 
 Implementation
@@ -62,7 +64,6 @@ begin
         for J := 0 to High(Board) do
             Board[I][J].Value := -1;
 
-    var but := TBitmap.Create;
 
     for I := 2 to 9 do
         for J := 2 to 9 do
@@ -76,19 +77,6 @@ begin
                     Board[I][J].Color := cWhite
                 else
                     Board[I][J].Color := cBlack;
-
-                var piece: TImage;
-                var filename: string := '../../pieces/'+let[Board[I][J].Color][Board[I][J].Figure]+'.png';
-
-                piece := TImage.Create(Self);
-                piece.Picture.LoadFromFile(filename);
-                piece.Width := cellWidth;
-                piece.Height := cellWidth;
-                piece.Parent := ScrollBox1;
-                piece.left := 20;
-                piece.top := 20;
-                Board[I][J].Pointer := piece;
-                piece.Stretch := true;
             end;
 
             Board[I][J].Value := 0;
@@ -100,8 +88,8 @@ Var
     X, Y: Integer;
     Coord: TPoint;
 Begin
-    X := Points.X;
-    Y := Points.Y;
+    X := Points.Y;
+    Y := Points.X;
 
     Dec(X, BoardBox.Left);
     Dec(Y, BoardBox.Top);
@@ -118,11 +106,34 @@ Begin
     GetIndexOfCell := Coord;
 End;
 
+Procedure TStartForm.getWays(x, y: integer);
+begin
+    board[x][y].IsAvaible := true;
+    board[x + 1][y].IsAvaible := true;
+end;
+
+Procedure TStartForm.setWaysEmpty;
+begin
+    for var I := Low(board) to High(board) do
+        for var J := Low(board) to High(board) do
+            board[i][j].IsAvaible := false;
+end;
+
 Procedure TStartForm.BoardBoxClick(Sender: TObject);
 Var
     Coord: TPoint;
 Begin
     Coord := GetIndexOfCell(ScreenToClient(Mouse.CursorPos));
+
+    if board[coord.x][coord.y].isFigure then
+    begin
+        setWaysEmpty;
+        getWays(coord.x, coord.y);
+    end
+    else
+        setWaysEmpty;
+
+    BoardBox.Repaint;
 End;
 
 Procedure TStartForm.BoardBoxPaint(Sender: TObject);
@@ -143,9 +154,11 @@ Begin
             With BoardBox Do
             Begin
                 If (I + J) Mod 2 = 0 Then
-                    Canvas.Brush.Color := BOARD_COLORS[CWhite]
+                    Canvas.Brush.Color :=
+                        BOARD_COLORS[board[i][j].IsAvaible and board[i][j].isFigure][CWhite]
                 Else
-                    Canvas.Brush.Color := BOARD_COLORS[CBlack];
+                    Canvas.Brush.Color :=
+                        BOARD_COLORS[board[i][j].IsAvaible and board[i][j].isFigure][CBlack];
 
                 Canvas.Rectangle((I - 1) * CellWidth,
                     (J - 1) * CellWidth, I * CellWidth,
@@ -156,13 +169,26 @@ Begin
         for J := Low(Board) to High(Board) do
             if board[i][j].isFigure then
             begin
-                var point := Board[i][j].Pointer;
-                point.Width := cellWidth;
-                point.Height := cellWidth;
-                point.Left := 0;
-                point.top := 0;
+                var DestRect := Rect((j-2)*CellWidth, (i-2)*CellWidth,
+                    (j-2)*CellWidth + CellWidth, (i-2)*CellWidth + CellWidth);
+                BoardBox.Canvas.StretchDraw(DestRect,
+                    pieces[Board[I][J].Color][Board[I][J].Figure].Picture.Graphic);
             end;
 End;
+
+procedure TStartForm.FormCreate(Sender: TObject);
+begin
+    for var I := Low(TFigureColors) to High(TFigureColors) do
+        for var J := Low(TFigures) to High(TFigures) do
+            if let[I][J] <> '' then
+            begin
+                var filename: string := '../../pieces/'+let[I][J]+'.png';
+
+                pieces[I][J] := TImage.Create(Self);
+                pieces[I][J].Picture.LoadFromFile(filename);
+            end;
+
+end;
 
 Procedure TStartForm.FormResize(Sender: TObject);
 Begin

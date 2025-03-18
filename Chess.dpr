@@ -4,7 +4,8 @@ uses
   Vcl.Forms,
   MainUnit in 'MainUnit.pas' {StartForm},
   Vcl.Themes,
-  Vcl.Styles;
+  Vcl.Styles,
+  Global in 'Global.pas';
 
 {$R *.res}
 

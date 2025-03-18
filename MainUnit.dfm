@@ -2127,6 +2127,7 @@ object StartForm: TStartForm
     FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}
   Menu = MainMenu
   Position = poScreenCenter
+  OnCreate = FormCreate
   OnResize = FormResize
   OnShow = FormShow
   TextHeight = 15
@@ -2138,13 +2139,6 @@ object StartForm: TStartForm
     Cursor = crHandPoint
     OnClick = BoardBoxClick
     OnPaint = BoardBoxPaint
-  end
-  object ScrollBox1: TScrollBox
-    Left = 0
-    Top = 0
-    Width = 845
-    Height = 450
-    TabOrder = 0
   end
   object MainMenu: TMainMenu
     Left = 824
