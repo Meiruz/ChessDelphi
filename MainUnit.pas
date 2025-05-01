@@ -4,9 +4,11 @@ Interface
 
 Uses
     Global, Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
-    System.Classes, Vcl.Graphics,
+    Vcl.Graphics,
     Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
-    Vcl.Menus, Vcl.Imaging.pngimage;
+    Vcl.Menus, Vcl.Imaging.Pngimage, Vcl.Grids, Math, FigureCheckers,
+    ModalPownChanging, PointStack,
+    System.Classes, Vcl.ExtDlgs, Vcl.MPlayer, EndProgramFormUnit, SympleModalUnit;
 
 Type
     TStartForm = Class(TForm)
@@ -15,29 +17,50 @@ Type
         NewMenuBtn: TMenuItem;
         OpenMenuBtn: TMenuItem;
         SaveMenuBtn: TMenuItem;
-        NotationMenuBtn: TMenuItem;
         Diver: TMenuItem;
         ExitMenuBtn: TMenuItem;
         HelpMenuBtn: TMenuItem;
         AboutGameMenuBtn: TMenuItem;
         AboutDevMenuBtn: TMenuItem;
         RulesMenuBtn: TMenuItem;
-        BoardBox: TPaintBox;
-        SettingsMainBtn: TMenuItem;
-        Procedure BoardBoxPaint(Sender: TObject);
+        GameField: TDrawGrid;
+        OpenTextFileDialog: TOpenTextFileDialog;
+        SaveTextFileDialog: TSaveTextFileDialog;
+        ChessSound: TMediaPlayer;
+        Procedure FormCreate(Sender: TObject);
         Procedure FormResize(Sender: TObject);
-        Function GetIndexOfCell(Const Points: TPoint): TPoint;
-        Procedure BoardBoxClick(Sender: TObject);
-        Procedure CreateGameBoard;
-        Procedure getWays(x, y: integer);
-        Procedure setWaysEmpty;
-    procedure FormShow(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
+        Procedure GameFieldDrawCell(Sender: TObject; ACol, ARow: LongInt;
+            Rect: TRect; State: TGridDrawState);
+        Procedure SwapElement(ARow, ACol: Integer);
+        Procedure SwapActiveUser;
+        Procedure GameFieldSelectCell(Sender: TObject; ACol, ARow: LongInt;
+            Var CanSelect: Boolean);
+        Procedure ChangePawn(ARow, ACol: Integer);
+        Procedure CastlingSwap(ARow, ACol: Integer);
+        Procedure ClickToCell(ARow, ACol: Integer; UseStack: Boolean = True);
+        Procedure SetPicesImages(Const PathToImages: String);
+        Procedure StartNewGame;
+        Procedure GetGameDataFromFile;
+        Procedure NewMenuBtnClick(Sender: TObject);
+        Procedure OpenMenuBtnClick(Sender: TObject);
+        Function IsFormatFile(Const Filename: String;
+            IsMessage: Boolean = False): Boolean;
+        Function IsFileExist(Const Filename: String): Boolean;
+        Procedure SaveGameDataToFile;
+        Procedure RunStack;
+        Procedure SaveMenuBtnClick(Sender: TObject);
+        Procedure ExitMenuBtnClick(Sender: TObject);
+        Procedure EndGame(Winner: TFigureColors);
+    procedure RulesMenuBtnClick(Sender: TObject);
+    procedure AboutGameMenuBtnClick(Sender: TObject);
+    procedure AboutDevMenuBtnClick(Sender: TObject);
     Private
         BoardWidth, CellWidth: Integer;
         Board: TBoardMatrix;
-    Public
-        { Public declarations }
+        ActiveRow, ActiveCol: Integer;
+        ActiveUser: TFigureColors;
+        GameStatus: TGameStatus;
+        GameStack: PStack;
     End;
 
 Const
@@ -46,159 +69,363 @@ Const
 
 Var
     StartForm: TStartForm;
-    BOARD_COLORS: Array [Boolean, TFigureColors] Of Integer = (
-        (ClWhite, ClWebCadetBlue),
-        (clWebLightCoral, clWebBrown)
-    );
+    BOARD_COLORS: Array [Boolean, 0 .. 1] Of Integer =
+        ((ClWhite, ClWebCadetBlue), (ClWebLightCoral, ClWebBrown));
 
 Implementation
 
 {$R *.dfm}
 
-Procedure TStartForm.CreateGameBoard;
-var
-    I, J: integer;
-begin
-    SetLength(Board, 12, 12);
-    for  I := 0 to High(Board) do
-        for J := 0 to High(Board) do
-            Board[I][J].Value := -1;
-
-
-    for I := 2 to 9 do
-        for J := 2 to 9 do
-        begin
-            Board[I][J].isFigure := StartBoard[I-2][J-2] <> FNONE;
-            If Board[I][J].isFigure Then
-            begin
-
-                Board[I][J].Figure := StartBoard[I - 2][J - 2];
-                if i > 6 then
-                    Board[I][J].Color := cWhite
-                else
-                    Board[I][J].Color := cBlack;
-            end;
-
-            Board[I][J].Value := 0;
-        end;
-end;
-
-Function TStartForm.GetIndexOfCell(Const Points: TPoint): TPoint;
-Var
-    X, Y: Integer;
-    Coord: TPoint;
+{
+  *** Form Settings ***
+}
+Procedure TStartForm.StartNewGame;
 Begin
-    X := Points.Y;
-    Y := Points.X;
+    InitializeBoard(Board);
+    New(GameStack);
+    GameStack^.First := Nil;
 
-    Dec(X, BoardBox.Left);
-    Dec(Y, BoardBox.Top);
+    ActiveUser := CWhite;
+    GameStatus := GNone;
 
-    Coord.X := X Div CellWidth;
-    Coord.Y := Y Div CellWidth;
-
-    If (Coord.X > 7) Or (Coord.Y > 7) Or (X < 0) Or (Y < 0) Then
-    Begin
-        Coord.X := -1;
-        Coord.Y := -1;
-    End;
-
-    GetIndexOfCell := Coord;
+    GameField.Invalidate;
 End;
 
-Procedure TStartForm.getWays(x, y: integer);
-begin
-    board[x][y].IsAvaible := true;
-    board[x + 1][y].IsAvaible := true;
-end;
-
-Procedure TStartForm.setWaysEmpty;
-begin
-    for var I := Low(board) to High(board) do
-        for var J := Low(board) to High(board) do
-            board[i][j].IsAvaible := false;
-end;
-
-Procedure TStartForm.BoardBoxClick(Sender: TObject);
-Var
-    Coord: TPoint;
+Procedure TStartForm.FormCreate(Sender: TObject);
 Begin
-    Coord := GetIndexOfCell(ScreenToClient(Mouse.CursorPos));
+    DoubleBuffered := True;
+    GameField.DoubleBuffered := True;
 
-    if board[coord.x][coord.y].isFigure then
-    begin
-        setWaysEmpty;
-        getWays(coord.x, coord.y);
-    end
-    else
-        setWaysEmpty;
+    SetPicesImages('pieces/');
+    ChessSound.FileName := 'sound.mp3';
 
-    BoardBox.Repaint;
+    StartNewGame;
+
+    var Scale: real := Screen.PixelsPerInch / 96;
+
+    Constraints.MinWidth := Round(400*Scale);
+    Constraints.MinHeight := Round(400*Scale);
 End;
 
-Procedure TStartForm.BoardBoxPaint(Sender: TObject);
+Procedure TStartForm.SetPicesImages(Const PathToImages: String);
 Var
-    I, J: Integer;
+    Filename: String;
 Begin
-    BoardWidth := Min(Self.ClientHeight, Self.ClientWidth) - 20;
-    Dec(BoardWidth, BoardWidth Mod 8);
-    CellWidth := BoardWidth Div 8;
-
-    BoardBox.width := BoardWidth;
-    BoardBox.height := BoardWidth;
-    BoardBox.left := (self.Clientwidth - BoardBox.Width) div 2;
-    BoardBox.top := (self.Clientheight - BoardBox.height) div 2;
-
-    For I := 1 To 8 Do
-        For J := 1 To 8 Do
-            With BoardBox Do
+    For Var I := Low(TFigureColors) To High(TFigureColors) Do
+        For Var J := Low(TFigures) To High(TFigures) Do
+            If Let[I][J] <> '' Then
             Begin
-                If (I + J) Mod 2 = 0 Then
-                    Canvas.Brush.Color :=
-                        BOARD_COLORS[board[i][j].IsAvaible and board[i][j].isFigure][CWhite]
-                Else
-                    Canvas.Brush.Color :=
-                        BOARD_COLORS[board[i][j].IsAvaible and board[i][j].isFigure][CBlack];
+                Filename := PathToImages + Let[I][J] + '.png';
 
-                Canvas.Rectangle((I - 1) * CellWidth,
-                    (J - 1) * CellWidth, I * CellWidth,
-                    J * CellWidth);
+                Pieces[I][J] := TPngImage.Create;
+                Pieces[I][J].LoadFromFile(Filename);
             End;
-
-    for I := Low(Board) to High(Board) do
-        for J := Low(Board) to High(Board) do
-            if board[i][j].isFigure then
-            begin
-                var DestRect := Rect((j-2)*CellWidth, (i-2)*CellWidth,
-                    (j-2)*CellWidth + CellWidth, (i-2)*CellWidth + CellWidth);
-                BoardBox.Canvas.StretchDraw(DestRect,
-                    pieces[Board[I][J].Color][Board[I][J].Figure].Picture.Graphic);
-            end;
 End;
-
-procedure TStartForm.FormCreate(Sender: TObject);
-begin
-    for var I := Low(TFigureColors) to High(TFigureColors) do
-        for var J := Low(TFigures) to High(TFigures) do
-            if let[I][J] <> '' then
-            begin
-                var filename: string := '../../pieces/'+let[I][J]+'.png';
-
-                pieces[I][J] := TImage.Create(Self);
-                pieces[I][J].Picture.LoadFromFile(filename);
-            end;
-
-end;
 
 Procedure TStartForm.FormResize(Sender: TObject);
+Var
+    NewWidth, NewHeight: Integer;
 Begin
-    BoardBox.Repaint;
+    Var
+    Margin := 15;
+
+    NewWidth := ClientWidth;
+    NewHeight := ClientHeight;
+
+    With GameField Do
+    Begin
+        ClientWidth := Min(NewHeight, NewWidth) - Margin * 2;
+        ClientWidth := ClientWidth - ClientWidth Mod 8;
+        Height := Width;
+
+        Left := (NewWidth - Width) Div 2;
+        Top := (NewHeight - Height) Div 2;
+
+        ColCount := 8;
+        RowCount := 8;
+        DefaultColWidth := (ClientWidth - GridLineWidth) Div 8 - 1;
+        DefaultRowHeight := (ClientHeight - GridLineWidth) Div 8 - 1;
+    End;
 End;
 
-procedure TStartForm.FormShow(Sender: TObject);
+{
+  *** Interaction with player ***
+}
+Procedure TStartForm.EndGame(Winner: TFigureColors);
+Begin
+    GameField.Invalidate;
+    If OpenEndProgramForm(Self, Self.GameStatus,
+        NextColor(Self.ActiveUser), self.GameStack) Then
+        StartNewGame
+    Else
+        Close;
+End;
+
+Procedure TStartForm.ChangePawn(ARow, ACol: Integer);
+Begin
+    Var
+    Form := TPownChangingForm.Create(Self);
+    Try
+        Form.ShowModal;
+        Board[ARow][ACol].Figure := Form.CurrentValue;
+    Finally
+        Form.Free;
+    End;
+End;
+
+Procedure TStartForm.CastlingSwap(ARow, ACol: Integer);
+    Procedure Swap(ACol1, ACol2: Integer);
+    Begin
+        Board[ARow][ACol1].IsFigure := True;
+        Board[ARow][ACol1].Figure := Board[ARow][ACol2].Figure;
+        Board[ARow][ACol1].Color := Board[ARow][ACol2].Color;
+        Board[ARow][ACol2].IsFigure := False;
+    End;
+
+Begin
+    If (ACol = 1) Then
+        Swap(ACol + 1, ACol - 1)
+    Else
+        Swap(ACol - 1, ACol + 1);
+End;
+
+Procedure TStartForm.SwapElement(ARow, ACol: Integer);
+Begin
+    With Board[ARow, ACol] Do
+    Begin
+        IsFigure := True;
+        Color := Board[ActiveRow][ActiveCol].Color;
+        Figure := Board[ActiveRow][ActiveCol].Figure;
+
+        If (Figure = FPawn) And (ARow = Ord(Color) * 7) Then
+            ChangePawn(ARow, ACol);
+
+        If (Figure = FKing) Then
+            CastlingStates[Color][2] := False;
+
+        If (Figure = FRook) And (ARow = 7 * (1 - Ord(Color))) Then
+            CastlingStates[Color][ACol Mod 2] := False;
+
+        If Value = -2 Then
+            CastlingSwap(ARow, ACol);
+    End;
+
+    Board[ActiveRow][ActiveCol].IsFigure := False;
+    ClearCells(Self.Board);
+
+    SwapActiveUser;
+End;
+
+Procedure TStartForm.SwapActiveUser;
+Begin
+    ActiveUser := NextColor(ActiveUser);
+End;
+
+Procedure TStartForm.ClickToCell(ARow, ACol: Integer; UseStack: Boolean = True);
+Begin
+    If Board[ARow][ACol].IsAvaible Then
+    Begin
+        If UseStack Then
+        Begin
+            ChessSound.Open;
+            ChessSound.Play;
+
+            AddElement(GameStack, ARow, ACol,
+                Board[Self.ActiveRow][Self.ActiveCol].figure);
+        End;
+
+        SwapElement(ARow, ACol);
+        CheckGameStatus(Board, ActiveUser, GameStatus);
+        ClearCells(Board);
+
+        If (GameStatus = GMate) Or (GameStatus = GStatemate) Then
+            EndGame(NextColor(ActiveUser));
+    End
+    Else
+        If (Board[ARow][ACol].IsFigure) And
+            (Board[ARow][ACol].Color = ActiveUser) Then
+        Begin
+            If UseStack Then
+                AddElement(GameStack, ARow, ACol, FNone);
+
+            Self.ActiveRow := ARow;
+            Self.ActiveCol := ACol;
+
+            CheckWays(Board, ARow, ACol);
+            deleteCastlingIfCheck(Board, gameStatus);
+            DeleteBadPoints(Board, ARow, ACol, GameStatus);
+        End
+        Else
+            ClearCells(Self.Board);
+
+    GameField.Invalidate;
+End;
+
+{
+  *** File working ***
+}
+Function TStartForm.IsFormatFile(Const Filename: String;
+    IsMessage: Boolean = False): Boolean;
+Var
+    FormatStr: String;
+Begin
+    Result := False;
+    FormatStr := INTERFACE_TEXT[SFormat];
+
+    If Length(FormatStr) < Length(Filename) Then
+    Begin
+        Result := True;
+        For Var I := Low(FormatStr) To High(FormatStr) Do
+            Result := (Result) And
+                (FormatStr[I] = Filename[High(Filename) -
+                Length(FormatStr) + I]);
+    End;
+
+    If (IsMessage) And (Not Result) Then
+        Application.MessageBox(PWideChar(INTERFACE_TEXT[EFileType]),
+            PWideChar(INTERFACE_TEXT[EError]), MB_OK Or MB_ICONERROR);
+End;
+
+Function TStartForm.IsFileExist(Const Filename: String): Boolean;
+Begin
+    Result := FileExists(Filename);
+    If Not Result Then
+        Application.MessageBox(PWideChar(INTERFACE_TEXT[EFileNotExist]),
+            PWideChar(INTERFACE_TEXT[EError]), MB_OK Or MB_ICONERROR);
+End;
+
+Procedure TStartForm.GetGameDataFromFile;
+Begin
+    OpenTextFileDialog.Filter := INTERFACE_TEXT[FormatName] + '| *' +
+        INTERFACE_TEXT[SFormat];
+
+    With OpenTextFileDialog Do
+        If (Execute(Self.Handle)) And (IsFormatFile(Filename, True)) And
+            (IsFileExist(Filename)) Then
+        Begin
+            StartNewGame;
+            ImportElementsFromFile(GameStack, Filename);
+            RunStack;
+        End;
+End;
+
+Procedure TStartForm.RunStack;
+Var
+    CurrentElement: PElement;
+Begin
+    CurrentElement := GameStack^.First;
+    While CurrentElement <> Nil Do
+    Begin
+        ClickToCell(CurrentELement^.Value^.X, CurrentELement^.Value^.Y, False);
+        CurrentElement := CurrentElement^.Next;
+    End;
+End;
+
+Procedure TStartForm.SaveGameDataToFile;
+Begin
+    SaveTextFileDialog.Filter := INTERFACE_TEXT[FormatName] + '| *' +
+        INTERFACE_TEXT[SFormat];
+
+    With SaveTextFileDialog Do
+        If (Execute(Self.Handle)) Then
+        Begin
+            If Not IsFormatFile(Filename) Then
+                Filename := Filename + INTERFACE_TEXT[SFormat];
+            SaveElementsToFile(GameStack, Filename);
+        End;
+End;
+
+{
+  *** Events ***
+}
+Procedure TStartForm.GameFieldSelectCell(Sender: TObject; ACol, ARow: LongInt;
+    Var CanSelect: Boolean);
+Begin
+    ClickToCell(ARow, ACol);
+End;
+
+Procedure TStartForm.GameFieldDrawCell(Sender: TObject; ACol, ARow: LongInt;
+    Rect: TRect; State: TGridDrawState);
+Var
+    Grid: TDrawGrid;
+Begin
+    Grid := Sender As TDrawGrid;
+
+    Grid.Canvas.Brush.Color := BOARD_COLORS[False][(ACol + ARow) Mod 2];
+    Grid.Canvas.FillRect(Rect);
+
+    With Board[ARow][ACol] Do
+        If IsFigure And (Pieces[Color][Figure] <> Nil) Then
+        Begin
+            If IsAvaible Then
+            Begin
+                Grid.Canvas.Brush.Color := ClWebOrangeRed;
+                Grid.Canvas.FillRect(Rect);
+            End;
+            If (GameStatus = GCheck) And (Figure = FKing) And
+                (Color = ActiveUser) Then
+            Begin
+                Grid.Canvas.Brush.Color := clPurple;
+                Grid.Canvas.FillRect(Rect);
+            End;
+            DrawPngStretchProportional(Grid.Canvas, Rect,
+                Pieces[Color][Figure]);
+        End
+        Else
+            If IsAvaible Then
+            Begin
+                Var
+                Margin := Round(Rect.Width - Rect.Width * 0.4) Div 2;
+
+                If Value = -2 Then
+                    Grid.Canvas.Brush.Color := ClWebCornFlowerBlue
+                Else
+                    Grid.Canvas.Brush.Color := ClWebMediumSeaGreen;
+
+                Grid.Canvas.Ellipse(Rect.Left + Margin, Rect.Top + Margin,
+                    Rect.Left + Rect.Width - Margin,
+                    Rect.Top + Rect.Width - Margin);
+            End;
+End;
+
+Procedure TStartForm.NewMenuBtnClick(Sender: TObject);
+Begin
+    StartNewGame;
+End;
+
+Procedure TStartForm.OpenMenuBtnClick(Sender: TObject);
+Begin
+    GetGameDataFromFile;
+    GameField.Invalidate;
+End;
+
+Procedure TStartForm.SaveMenuBtnClick(Sender: TObject);
+Begin
+    SaveGameDataToFile;
+    Application.MessageBox('Game data has been saved successful!', 'Saved!',
+        MB_OK Or MB_ICONINFORMATION);
+End;
+
+Procedure TStartForm.ExitMenuBtnClick(Sender: TObject);
+Begin
+    Close;
+End;
+
+procedure TStartForm.RulesMenuBtnClick(Sender: TObject);
 begin
-   CreateGameBoard;
-   BoardBox.Repaint;
+    OpenSympleModal(Self, 'Rules', INTERFACE_TEXT[IRules]);
 end;
+
+procedure TStartForm.AboutDevMenuBtnClick(Sender: TObject);
+begin
+    OpenSympleModal(Self, 'About developer', INTERFACE_TEXT[IAboutDev]);
+end;
+
+procedure TStartForm.AboutGameMenuBtnClick(Sender: TObject);
+begin
+    OpenSympleModal(Self, 'About game', INTERFACE_TEXT[IAboutProg]);
+end;
+
+
 
 End.

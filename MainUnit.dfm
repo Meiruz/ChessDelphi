@@ -2129,16 +2129,34 @@ object StartForm: TStartForm
   Position = poScreenCenter
   OnCreate = FormCreate
   OnResize = FormResize
-  OnShow = FormShow
   TextHeight = 15
-  object BoardBox: TPaintBox
-    Left = 0
-    Top = 0
-    Width = 849
-    Height = 833
+  object GameField: TDrawGrid
+    Left = 176
+    Top = 64
+    Width = 471
+    Height = 322
     Cursor = crHandPoint
-    OnClick = BoardBoxClick
-    OnPaint = BoardBoxPaint
+    DefaultDrawing = False
+    DoubleBuffered = True
+    FixedCols = 0
+    FixedRows = 0
+    ParentDoubleBuffered = False
+    ScrollBars = ssNone
+    TabOrder = 0
+    OnDrawCell = GameFieldDrawCell
+    OnSelectCell = GameFieldSelectCell
+  end
+  object ChessSound: TMediaPlayer
+    Left = 592
+    Top = 420
+    Width = 253
+    Height = 30
+    ColoredButtons = [btPlay]
+    DoubleBuffered = True
+    Visible = False
+    ParentDoubleBuffered = False
+    TabOrder = 1
+    TabStop = False
   end
   object MainMenu: TMainMenu
     Left = 824
@@ -2146,37 +2164,51 @@ object StartForm: TStartForm
       Caption = 'File'
       object NewMenuBtn: TMenuItem
         Caption = 'New Game'
+        ShortCut = 16462
+        OnClick = NewMenuBtnClick
       end
       object OpenMenuBtn: TMenuItem
         Caption = 'Open Game'
+        ShortCut = 16463
+        OnClick = OpenMenuBtnClick
       end
       object SaveMenuBtn: TMenuItem
         Caption = 'Save Game'
-      end
-      object NotationMenuBtn: TMenuItem
-        Caption = 'Save Notation'
+        ShortCut = 16467
+        OnClick = SaveMenuBtnClick
       end
       object Diver: TMenuItem
         Caption = '-'
       end
       object ExitMenuBtn: TMenuItem
         Caption = 'Exit'
+        ShortCut = 16465
+        OnClick = ExitMenuBtnClick
       end
-    end
-    object SettingsMainBtn: TMenuItem
-      Caption = 'Settings'
     end
     object HelpMenuBtn: TMenuItem
       Caption = 'Help'
       object RulesMenuBtn: TMenuItem
         Caption = 'Game Rules'
+        ShortCut = 112
+        OnClick = RulesMenuBtnClick
       end
       object AboutGameMenuBtn: TMenuItem
         Caption = 'About game'
+        OnClick = AboutGameMenuBtnClick
       end
       object AboutDevMenuBtn: TMenuItem
         Caption = 'About developer'
+        OnClick = AboutDevMenuBtnClick
       end
     end
+  end
+  object OpenTextFileDialog: TOpenTextFileDialog
+    Left = 824
+    Top = 32
+  end
+  object SaveTextFileDialog: TSaveTextFileDialog
+    Left = 824
+    Top = 64
   end
 end
