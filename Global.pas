@@ -19,32 +19,32 @@ Type
 
     TBoardMatrix = Array Of Array Of TCell;
 
-    TInterfaceText = (IAboutProg, IAboutDev, IRules, FFName, EError, EFileNotExist,
-        EFileType, FormatName, SFormat);
+    TInterfaceText = (IAboutProg, IAboutDev, IRules, FFName, EError,
+        EFileNotExist, EFileType, FormatName, SFormat);
 
 Const
     INTERFACE_TEXT: Array [TInterfaceText] Of String = (
         // Information
         'Ivanov Pavel'#13#10'gr. 451004'#13#10'tg: @Meiruz',
-        'Simple Chess Game: A two-player turn-based chess'#13#10+
-        'program following standard rules, including piece'#13#10+
-        'movement, checkmate, and special moves like castling.'#13#10+
-        'Players input moves in algebraic notation, with'#13#10+
+        'Simple Chess Game: A two-player turn-based chess'#13#10 +
+        'program following standard rules, including piece'#13#10 +
+        'movement, checkmate, and special moves like castling.'#13#10 +
+        'Players input moves in algebraic notation, with'#13#10 +
         'validation to prevent illegal plays.',
         'The goal is to checkmate the opponent''s king.'#13#10 +
         'The king moves 1 square in any direction. The queen '#13#10 +
-        'moves any distance in any direction. The rook moves any distance'#13#10 +
-        'straight. The bishop moves any distance diagonally. The knight'#13#10 +
-        'moves in an "L"-shape (2 squares one way, then 1 square'#13#10 +
-        'perpendicular). Pawns move forward 1 square (or 2 on their'#13#10+
-        'first move) and capture diagonally. Special moves: '#13#10+
-        'castling (king and rook swap under conditions), en passant'#13#10+
-        ' (pawn captures another pawn that moved two squares), and'#13#10+
-        ' promotion (pawn reaches the far rank, turns into any piece'#13#10+
-        'except king). Check means the king is under attack; checkmate'#13#10+
-        'means the king cannot escape. Stalemate is a draw (no legal'#13#10+
-        'moves, but king not in check). The game also ends in a draw by'#13#10+
-        'agreement, repetition, or the 50-move rule (no captures/pawn'#13#10+
+        'moves any distance in any direction. The rook moves any distance'#13#10
+        + 'straight. The bishop moves any distance diagonally. The knight'#13#10
+        + 'moves in an "L"-shape (2 squares one way, then 1 square'#13#10 +
+        'perpendicular). Pawns move forward 1 square (or 2 on their'#13#10 +
+        'first move) and capture diagonally. Special moves: '#13#10 +
+        'castling (king and rook swap under conditions), en passant'#13#10 +
+        ' (pawn captures another pawn that moved two squares), and'#13#10 +
+        ' promotion (pawn reaches the far rank, turns into any piece'#13#10 +
+        'except king). Check means the king is under attack; checkmate'#13#10 +
+        'means the king cannot escape. Stalemate is a draw (no legal'#13#10 +
+        'moves, but king not in check). The game also ends in a draw by'#13#10 +
+        'agreement, repetition, or the 50-move rule (no captures/pawn'#13#10 +
         ' moves in 50 turns).',
         // First Form
         '451004 Ivanov Pavel', // Name
@@ -131,9 +131,9 @@ Begin
 End;
 
 Procedure CenterLabelOnScreen(Form: TForm; CurrentLabel: TLabel);
-begin
-    with CurrentLabel do
-        Left := (Form.ClientWidth - Width) div 2;
-end;
+Begin
+    With CurrentLabel Do
+        Left := (Form.ClientWidth - Width) Div 2;
+End;
 
 End.

@@ -17,7 +17,7 @@ object EndGameForm: TEndGameForm
   TextHeight = 15
   object BgImg: TImage
     Left = 52
-    Top = 79
+    Top = 53
     Width = 265
     Height = 268
     Picture.Data = {

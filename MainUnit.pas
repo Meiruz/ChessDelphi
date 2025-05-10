@@ -8,7 +8,8 @@ Uses
     Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
     Vcl.Menus, Vcl.Imaging.Pngimage, Vcl.Grids, Math, FigureCheckers,
     ModalPownChanging, PointStack,
-    System.Classes, Vcl.ExtDlgs, Vcl.MPlayer, EndProgramFormUnit, SympleModalUnit;
+    System.Classes, Vcl.ExtDlgs, Vcl.MPlayer, EndProgramFormUnit,
+    SympleModalUnit;
 
 Type
     TStartForm = Class(TForm)
@@ -51,9 +52,9 @@ Type
         Procedure SaveMenuBtnClick(Sender: TObject);
         Procedure ExitMenuBtnClick(Sender: TObject);
         Procedure EndGame(Winner: TFigureColors);
-    procedure RulesMenuBtnClick(Sender: TObject);
-    procedure AboutGameMenuBtnClick(Sender: TObject);
-    procedure AboutDevMenuBtnClick(Sender: TObject);
+        Procedure RulesMenuBtnClick(Sender: TObject);
+        Procedure AboutGameMenuBtnClick(Sender: TObject);
+        Procedure AboutDevMenuBtnClick(Sender: TObject);
     Private
         BoardWidth, CellWidth: Integer;
         Board: TBoardMatrix;
@@ -101,10 +102,11 @@ Begin
 
     StartNewGame;
 
-    var Scale: real := Screen.PixelsPerInch / 96;
+    Var
+        Scale: Real := Screen.PixelsPerInch / 96;
 
-    Constraints.MinWidth := Round(400*Scale);
-    Constraints.MinHeight := Round(400*Scale);
+    Constraints.MinWidth := Round(400 * Scale);
+    Constraints.MinHeight := Round(400 * Scale);
 End;
 
 Procedure TStartForm.SetPicesImages(Const PathToImages: String);
@@ -118,7 +120,11 @@ Begin
                 Filename := PathToImages + Let[I][J] + '.png';
 
                 Pieces[I][J] := TPngImage.Create;
-                Pieces[I][J].LoadFromFile(Filename);
+                Try
+                    Pieces[I][J].LoadFromFile(Filename);
+                Except
+                    Application.Terminate;
+                End;
             End;
 End;
 
@@ -154,8 +160,8 @@ End;
 Procedure TStartForm.EndGame(Winner: TFigureColors);
 Begin
     GameField.Invalidate;
-    If OpenEndProgramForm(Self, Self.GameStatus,
-        NextColor(Self.ActiveUser), self.GameStack) Then
+    If OpenEndProgramForm(Self, Self.GameStatus, NextColor(Self.ActiveUser),
+        Self.GameStack) Then
         StartNewGame
     Else
         Close;
@@ -231,7 +237,7 @@ Begin
             ChessSound.Play;
 
             AddElement(GameStack, ARow, ACol,
-                Board[Self.ActiveRow][Self.ActiveCol].figure);
+                Board[Self.ActiveRow][Self.ActiveCol].Figure);
         End;
 
         SwapElement(ARow, ACol);
@@ -252,7 +258,7 @@ Begin
             Self.ActiveCol := ACol;
 
             CheckWays(Board, ARow, ACol);
-            deleteCastlingIfCheck(Board, gameStatus);
+            DeleteCastlingIfCheck(Board, GameStatus);
             DeleteBadPoints(Board, ARow, ACol, GameStatus);
         End
         Else
@@ -332,6 +338,8 @@ Begin
             If Not IsFormatFile(Filename) Then
                 Filename := Filename + INTERFACE_TEXT[SFormat];
             SaveElementsToFile(GameStack, Filename);
+            Application.MessageBox('Game data has been saved successful!', 'Saved!',
+                MB_OK Or MB_ICONINFORMATION);
         End;
 End;
 
@@ -365,7 +373,7 @@ Begin
             If (GameStatus = GCheck) And (Figure = FKing) And
                 (Color = ActiveUser) Then
             Begin
-                Grid.Canvas.Brush.Color := clPurple;
+                Grid.Canvas.Brush.Color := ClPurple;
                 Grid.Canvas.FillRect(Rect);
             End;
             DrawPngStretchProportional(Grid.Canvas, Rect,
@@ -402,8 +410,6 @@ End;
 Procedure TStartForm.SaveMenuBtnClick(Sender: TObject);
 Begin
     SaveGameDataToFile;
-    Application.MessageBox('Game data has been saved successful!', 'Saved!',
-        MB_OK Or MB_ICONINFORMATION);
 End;
 
 Procedure TStartForm.ExitMenuBtnClick(Sender: TObject);
@@ -411,21 +417,19 @@ Begin
     Close;
 End;
 
-procedure TStartForm.RulesMenuBtnClick(Sender: TObject);
-begin
+Procedure TStartForm.RulesMenuBtnClick(Sender: TObject);
+Begin
     OpenSympleModal(Self, 'Rules', INTERFACE_TEXT[IRules]);
-end;
+End;
 
-procedure TStartForm.AboutDevMenuBtnClick(Sender: TObject);
-begin
+Procedure TStartForm.AboutDevMenuBtnClick(Sender: TObject);
+Begin
     OpenSympleModal(Self, 'About developer', INTERFACE_TEXT[IAboutDev]);
-end;
+End;
 
-procedure TStartForm.AboutGameMenuBtnClick(Sender: TObject);
-begin
+Procedure TStartForm.AboutGameMenuBtnClick(Sender: TObject);
+Begin
     OpenSympleModal(Self, 'About game', INTERFACE_TEXT[IAboutProg]);
-end;
-
-
+End;
 
 End.

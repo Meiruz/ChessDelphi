@@ -2,7 +2,7 @@ Unit PointStack;
 
 Interface
 
-uses
+Uses
     Global;
 
 Type
@@ -30,7 +30,7 @@ Type
     TPointFile = File Of TPoints;
 
 Procedure DeleteStck(Stack: PStack);
-Procedure AddElement(Stack: PStack; X, Y: ShortInt; figure: TFigures);
+Procedure AddElement(Stack: PStack; X, Y: ShortInt; Figure: TFigures);
 Procedure PopElement(Stack: PStack);
 Function IsEmptyStack(Stack: PStack): Boolean;
 
@@ -48,7 +48,7 @@ Begin
     Dispose(Stack);
 End;
 
-Procedure AddElement(Stack: PStack; X, Y: ShortInt; figure: TFigures);
+Procedure AddElement(Stack: PStack; X, Y: ShortInt; Figure: TFigures);
 Var
     Element: PElement;
     Points: PPoints;
@@ -56,7 +56,7 @@ Begin
     New(Points);
     Points^.X := X;
     Points^.Y := Y;
-    Points^.Figure := figure;
+    Points^.Figure := Figure;
 
     New(Element);
     Element^.Value := Points;
@@ -116,33 +116,40 @@ End;
 
 Procedure SaveNotationToFile(Stack: PStack; Const Filepath: String);
 Var
-    CurrentPoint, PrevPoint: PElement;
+    CurrentPoint: PElement;
     OFile: TextFile;
+    i: byte;
 Const
-    FIGURE_SYM: Array [TFigures] Of Char = (
-        #0, 'R', 'N', 'B', 'Q', 'K', #0
-    );
+    FIGURE_SYM: Array [TFigures] Of Char = (#0, 'R', 'N', 'B', 'Q', 'K', #0);
 
-    Function PosToStr(x, y: shortInt): string;
-    begin
-        Result := Char(ord('a') + 7-x) + Char(ord('1') + 7-y) ;
-    end;
+    Function PosToStr(X, Y: ShortInt): String;
+    Begin
+        Result := Char(Ord('a') + Y) + Char(Ord('1') + 7 - X);
+    End;
+
 Begin
     AssignFile(OFile, Filepath);
     Rewrite(OFile);
 
+    i := 0;
     CurrentPoint := Stack^.First;
-    PrevPoint := Stack^.First;
     While CurrentPoint <> Nil Do
     Begin
-        if CurrentPoint^.Value^.Figure <> FNone then
-        begin
-            Write(OFile, FIGURE_SYM[CurrentPoint^.Value^.Figure]);
-            Write(OFile, PosToStr(PrevPoint^.Value^.X, PrevPoint^.Value^.Y));
-            Writeln(OFile, PosToStr(CurrentPoint^.Value^.X, CurrentPoint^.Value^.Y));
-        end;
+        If CurrentPoint^.Value^.Figure <> FNone Then
+        Begin
+            if i = 1 then
+                write(OFile, ' - ');
 
-        PrevPoint := CurrentPoint;
+            Write(OFile, FIGURE_SYM[CurrentPoint^.Value^.Figure]);
+            Write(OFile, PosToStr(CurrentPoint^.Value^.X,
+                CurrentPoint^.Value^.Y));
+
+            if i = 1 then
+                writeln(OFile);
+
+            i := (i + 1) mod 2;
+        End;
+
         CurrentPoint := CurrentPoint^.Next;
     End;
 

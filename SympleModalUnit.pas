@@ -1,30 +1,31 @@
-unit SympleModalUnit;
+Unit SympleModalUnit;
 
-interface
+Interface
 
-uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Global;
+Uses
+    Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+    System.Classes, Vcl.Graphics,
+    Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Global;
 
-type
-  TSympleModalForm = class(TForm)
-    ContentLabel: TLabel;
-    procedure FormShow(Sender: TObject);
-  public
-    title, content: string;
-  end;
+Type
+    TSympleModalForm = Class(TForm)
+        ContentLabel: TLabel;
+        Procedure FormShow(Sender: TObject);
+    Public
+        Title, Content: String;
+    End;
 
-var
-  SympleModalForm: TSympleModalForm;
+Var
+    SympleModalForm: TSympleModalForm;
 
-procedure OpenSympleModal(parent: TForm; const formTitle, formContent: string);
+Procedure OpenSympleModal(Parent: TForm; Const FormTitle, FormContent: String);
 
-implementation
+Implementation
 
 {$R *.dfm}
 
-procedure TSympleModalForm.FormShow(Sender: TObject);
-begin
+Procedure TSympleModalForm.FormShow(Sender: TObject);
+Begin
     Self.Caption := Title;
 
     ContentLabel.Caption := Content;
@@ -32,18 +33,18 @@ begin
     CenterLabelOnScreen(Self, ContentLabel);
 
     Self.Height := ContentLabel.Height + 150;
-end;
+End;
 
-procedure OpenSympleModal(parent: TForm; const formTitle, formContent: string);
-begin
-    with TSympleModalForm.Create(Parent) do
-        try
-            title := formTitle;
-            content := formContent;
+Procedure OpenSympleModal(Parent: TForm; Const FormTitle, FormContent: String);
+Begin
+    With TSympleModalForm.Create(Parent) Do
+        Try
+            Title := FormTitle;
+            Content := FormContent;
             ShowModal;
-        finally
+        Finally
             Free;
-        end;
-end;
+        End;
+End;
 
-end.
+End.

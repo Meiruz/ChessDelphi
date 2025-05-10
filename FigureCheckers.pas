@@ -22,9 +22,11 @@ Procedure CheckAllWays(Const Board: TBoardMatrix; Color: TFigureColors);
 Procedure CheckGameStatus(Const Board: TBoardMatrix;
     CurrentColor: TFigureColors; Var GameStatus: TGameStatus);
 
-Procedure DeleteBadPoints(Const Board: TBoardMatrix; ARow, ACol: Integer; GameStatus: TGameStatus);
-function nextColor(color: TFigureColors): TFigureColors;
-Procedure deleteCastlingIfCheck(Const Board: TBoardMatrix; gameStatus: TGameStatus);
+Procedure DeleteBadPoints(Const Board: TBoardMatrix; ARow, ACol: Integer;
+    GameStatus: TGameStatus);
+Function NextColor(Color: TFigureColors): TFigureColors;
+Procedure DeleteCastlingIfCheck(Const Board: TBoardMatrix;
+    GameStatus: TGameStatus);
 
 Var
     GetWaysFuntions: Array [TFigures] Of TProc = (
@@ -85,7 +87,6 @@ Begin
     Begin
         SimpleCheckingForAvaible := Not Board[X + Dx, Y + Dy].IsFigure;
         Board[X + Dx, Y + Dy].IsAvaible := True;
-        Board[X + Dx, Y + Dy].Value := -1;
     End;
 End;
 
@@ -185,7 +186,10 @@ Begin
         For Var J := Low(Board) To High(Board) Do
             With Board[I][J] Do
                 If (IsFigure) And (Color <> CurrentColor) Then
-                    GetWaysFuntions[Board[I][J].Figure](Board, J, I);
+                begin
+                var k :=Board[I][J]  ;
+                    GetWaysFuntions[Figure](Board, J, I);
+                end;
 
 End;
 
@@ -249,43 +253,47 @@ Begin
                 Board[I][J].Value := -1;
 End;
 
-Procedure CopyMatrix(var dest:TBoardMatrix; const src: TBoardMatrix);
-begin
-    setLength(dest, 8, 8);
+Procedure CopyMatrix(Var Dest: TBoardMatrix; Const Src: TBoardMatrix);
+Begin
+    SetLength(Dest, 8, 8);
 
-    for var I := Low(src) to High(src) do
-        for var J := Low(src[i]) to High(src[i]) do
-            dest[i][j] := src[i][j];
-end;
+    For Var I := Low(Src) To High(Src) Do
+        For Var J := Low(Src[I]) To High(Src[I]) Do
+            Dest[I][J] := Src[I][J];
+End;
 
-Procedure swapElement(Const Board: TBoardMatrix; x1, y1, x2, y2: shortInt);
-begin
-    with Board[x2][y2] do
-    begin
-        IsFigure := true;
-        figure := Board[x1][y1].figure;
-        color := Board[x1][y1].color;
-    end;
-    Board[x1][y1].IsFigure := false;
-end;
+Procedure SwapElement(Const Board: TBoardMatrix; X1, Y1, X2, Y2: ShortInt);
+Begin
+    With Board[X2][Y2] Do
+    Begin
+        IsFigure := True;
+        Figure := Board[X1][Y1].Figure;
+        Color := Board[X1][Y1].Color;
+        Value := Board[X1][Y1].Value;
+    End;
+    Board[X1][Y1].IsFigure := False;
+    Board[X1][Y1].Value := 0;
+End;
 
-Function IsKingUnderAttack(Const Board: TBoardMatrix; CurrentColor: TFigureColors): Boolean;
-var
+Function IsKingUnderAttack(Const Board: TBoardMatrix;
+    CurrentColor: TFigureColors): Boolean;
+Var
     NewBoard: TBoardMatrix;
-begin
-    result := true;
+Begin
+    Result := True;
     CopyMatrix(NewBoard, Board);
     ClearCells(NewBoard);
     ClearValues(NewBoard);
 
     CheckAllFigures(NewBoard, CurrentColor);
 
-    for var I := Low(Board) to High(Board) do
-        for var J := Low(Board[i]) to High(Board[i]) do
-            with NewBoard[I][J] do
-            if (IsFigure) and (figure = FKing) and (color = CurrentColor) then
-                Result := isAvaible;
-end;
+    For Var I := Low(Board) To High(Board) Do
+        For Var J := Low(Board[I]) To High(Board[I]) Do
+            With NewBoard[I][J] Do
+                If (IsFigure) And (Figure = FKing) And
+                    (Color = CurrentColor) Then
+                    Result := IsAvaible;
+End;
 
 Procedure CheckGameStatus(Const Board: TBoardMatrix;
     CurrentColor: TFigureColors; Var GameStatus: TGameStatus);
@@ -298,11 +306,12 @@ Begin
     ClearCells(Board);
     ClearValues(Board);
 
-    CheckAllFigures(board, CurrentColor);
+    CheckAllFigures(Board, CurrentColor);
     For I := Low(Board) To High(Board) Do
         For J := Low(Board[I]) To High(Board[I]) Do
             With Board[I][J] Do
-                If (IsFigure) And (Figure = FKing) And (Color = CurrentColor) Then
+                If (IsFigure) And (Figure = FKing) And
+                    (Color = CurrentColor) Then
                 Begin
                     KingX := I;
                     KingY := J;
@@ -310,8 +319,8 @@ Begin
 
     IsKingInCheck := Board[KingX][KingY].IsAvaible;
 
-    ClearCells(board);
-    ClearValues(board);
+    ClearCells(Board);
+    ClearValues(Board);
 
     HasAnyValidMove := False;
     For I := Low(Board) To High(Board) Do
@@ -329,12 +338,14 @@ Begin
                                 ClearCells(CheckTempBoard);
                                 ClearValues(CheckTempBoard);
 
-                                swapElement(CheckTempBoard, I, J, X, Y);
-                                If Not IsKingUnderAttack(CheckTempBoard, CurrentColor) Then
+                                SwapElement(CheckTempBoard, I, J, X, Y);
+                                If Not IsKingUnderAttack(CheckTempBoard,
+                                    CurrentColor) Then
                                     HasAnyValidMove := True;
-                                swapElement(CheckTempBoard, X, Y, I, J);
+                                SwapElement(CheckTempBoard, X, Y, I, J);
                             End;
-                    If HasAnyValidMove Then Break;
+                    If HasAnyValidMove Then
+                        Break;
                 End;
 
     If IsKingInCheck Then
@@ -353,38 +364,40 @@ Begin
     End;
 End;
 
-function nextColor(color: TFigureColors): TFigureColors;
-begin
-    Result := TFigureColors((Ord(color) + 1) Mod 2);
-end;
+Function NextColor(Color: TFigureColors): TFigureColors;
+Begin
+    Result := TFigureColors((Ord(Color) + 1) Mod 2);
+End;
 
-Procedure DeleteBadPoints(Const Board: TBoardMatrix; ARow, ACol: Integer; GameStatus: TGameStatus);
-var
-    NewBoard: TBoardMatrix;
-begin
-    For var X := Low(Board) To High(Board) Do
-        For var Y := Low(Board[X]) To High(Board[X]) Do
+Procedure DeleteBadPoints(Const Board: TBoardMatrix; ARow, ACol: Integer;
+    GameStatus: TGameStatus);
+Begin
+    For Var X := Low(Board) To High(Board) Do
+        For Var Y := Low(Board[X]) To High(Board[X]) Do
             If Board[X][Y].IsAvaible Then
             Begin
+                Var
+                    NewBoard: TBoardMatrix;
+
                 CopyMatrix(NewBoard, Board);
                 ClearCells(NewBoard);
                 ClearValues(NewBoard);
 
-                swapElement(NewBoard, ARow, ACol, X, Y);
-                Board[X, Y].IsAvaible := not
-                    IsKingUnderAttack(NewBoard, Board[ARow][ACol].color);
-                swapElement(NewBoard, X, Y, ARow, ACol);
+                SwapElement(NewBoard, ARow, ACol, X, Y);
+                Board[X, Y].IsAvaible := Not IsKingUnderAttack(NewBoard,
+                    Board[ARow][ACol].Color);
             End;
-end;
+End;
 
-Procedure deleteCastlingIfCheck(Const Board: TBoardMatrix; gameStatus: TGameStatus);
-begin
-    if gameStatus = GCheck then
-        For var X := Low(Board) To High(Board) Do
-            For var Y := Low(Board[X]) To High(Board[X]) Do
-                with board[X][Y] do
-                if value = -2 then
-                    isAvaible := false;
-end;
+Procedure DeleteCastlingIfCheck(Const Board: TBoardMatrix;
+    GameStatus: TGameStatus);
+Begin
+    If GameStatus = GCheck Then
+        For Var X := Low(Board) To High(Board) Do
+            For Var Y := Low(Board[X]) To High(Board[X]) Do
+                With Board[X][Y] Do
+                    If Value = -2 Then
+                        IsAvaible := False;
+End;
 
 End.
