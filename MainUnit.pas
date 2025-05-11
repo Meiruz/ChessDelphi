@@ -7,7 +7,7 @@ Uses
     Vcl.Graphics,
     Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
     Vcl.Menus, Vcl.Imaging.Pngimage, Vcl.Grids, Math, FigureCheckers,
-    ModalPownChanging, PointStack,
+    ModalPownChanging, PointList,
     System.Classes, Vcl.ExtDlgs, Vcl.MPlayer, EndProgramFormUnit,
     SympleModalUnit;
 
@@ -38,7 +38,7 @@ Type
             Var CanSelect: Boolean);
         Procedure ChangePawn(ARow, ACol: Integer);
         Procedure CastlingSwap(ARow, ACol: Integer);
-        Procedure ClickToCell(ARow, ACol: Integer; UseStack: Boolean = True);
+        Procedure ClickToCell(ARow, ACol: Integer; UseList: Boolean = True);
         Procedure SetPicesImages(Const PathToImages: String);
         Procedure StartNewGame;
         Procedure GetGameDataFromFile;
@@ -48,7 +48,7 @@ Type
             IsMessage: Boolean = False): Boolean;
         Function IsFileExist(Const Filename: String): Boolean;
         Procedure SaveGameDataToFile;
-        Procedure RunStack;
+        Procedure RunList;
         Procedure SaveMenuBtnClick(Sender: TObject);
         Procedure ExitMenuBtnClick(Sender: TObject);
         Procedure EndGame(Winner: TFigureColors);
@@ -61,7 +61,7 @@ Type
         ActiveRow, ActiveCol: Integer;
         ActiveUser: TFigureColors;
         GameStatus: TGameStatus;
-        GameStack: PStack;
+        GameList: PPointList;
     End;
 
 Const
@@ -83,8 +83,8 @@ Implementation
 Procedure TStartForm.StartNewGame;
 Begin
     InitializeBoard(Board);
-    New(GameStack);
-    GameStack^.First := Nil;
+
+    New(GameList);
 
     ActiveUser := CWhite;
     GameStatus := GNone;
@@ -161,7 +161,7 @@ Procedure TStartForm.EndGame(Winner: TFigureColors);
 Begin
     GameField.Invalidate;
     If OpenEndProgramForm(Self, Self.GameStatus, NextColor(Self.ActiveUser),
-        Self.GameStack) Then
+        Self.GameList) Then
         StartNewGame
     Else
         Close;
@@ -227,16 +227,16 @@ Begin
     ActiveUser := NextColor(ActiveUser);
 End;
 
-Procedure TStartForm.ClickToCell(ARow, ACol: Integer; UseStack: Boolean = True);
+Procedure TStartForm.ClickToCell(ARow, ACol: Integer; UseList: Boolean = True);
 Begin
     If Board[ARow][ACol].IsAvaible Then
     Begin
-        If UseStack Then
+        If UseList Then
         Begin
             ChessSound.Open;
             ChessSound.Play;
 
-            AddElement(GameStack, ARow, ACol,
+            AddElement(GameList, ARow, ACol,
                 Board[Self.ActiveRow][Self.ActiveCol].Figure);
         End;
 
@@ -251,8 +251,8 @@ Begin
         If (Board[ARow][ACol].IsFigure) And
             (Board[ARow][ACol].Color = ActiveUser) Then
         Begin
-            If UseStack Then
-                AddElement(GameStack, ARow, ACol, FNone);
+            If UseList Then
+                AddElement(GameList, ARow, ACol, FNone);
 
             Self.ActiveRow := ARow;
             Self.ActiveCol := ACol;
@@ -310,16 +310,16 @@ Begin
             (IsFileExist(Filename)) Then
         Begin
             StartNewGame;
-            ImportElementsFromFile(GameStack, Filename);
-            RunStack;
+            ImportElementsFromFile(GameList, Filename);
+            RunList;
         End;
 End;
 
-Procedure TStartForm.RunStack;
+Procedure TStartForm.RunList;
 Var
     CurrentElement: PElement;
 Begin
-    CurrentElement := GameStack^.First;
+    CurrentElement := GameList^.First;
     While CurrentElement <> Nil Do
     Begin
         ClickToCell(CurrentELement^.Value^.X, CurrentELement^.Value^.Y, False);
@@ -337,9 +337,9 @@ Begin
         Begin
             If Not IsFormatFile(Filename) Then
                 Filename := Filename + INTERFACE_TEXT[SFormat];
-            SaveElementsToFile(GameStack, Filename);
-            Application.MessageBox('Game data has been saved successful!', 'Saved!',
-                MB_OK Or MB_ICONINFORMATION);
+            SaveElementsToFile(GameList, Filename);
+            Application.MessageBox('Game data has been saved successful!',
+                'Saved!', MB_OK Or MB_ICONINFORMATION);
         End;
 End;
 

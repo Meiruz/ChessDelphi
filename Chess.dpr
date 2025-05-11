@@ -8,7 +8,7 @@ uses
   Global in 'Global.pas',
   FigureCheckers in 'FigureCheckers.pas',
   ModalPownChanging in 'ModalPownChanging.pas' {PownChangingForm},
-  PointStack in 'PointStack.pas',
+  PointList in 'PointList.pas',
   EndProgramFormUnit in 'EndProgramFormUnit.pas' {EndGameForm},
   SympleModalUnit in 'SympleModalUnit.pas' {SympleModalForm};
 

@@ -6,7 +6,7 @@ Uses
     Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
     System.Classes, Vcl.Graphics,
     Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Imaging.Pngimage,
-    Vcl.ExtCtrls, Global, FigureCheckers, Vcl.ExtDlgs, PointStack;
+    Vcl.ExtCtrls, Global, FigureCheckers, Vcl.ExtDlgs, PointList;
 
 Type
     TEndGameForm = Class(TForm)
@@ -25,7 +25,7 @@ Type
         Procedure NotationBtnClick(Sender: TObject);
     Public
         GameState: TGameStatus;
-        GameStack: PStack;
+        GameList: PPointList;
         Winner: TFigureColors;
         CloseState: Boolean;
     End;
@@ -38,19 +38,19 @@ Const
         'Black victory');
 
 Function OpenEndProgramForm(Form: TForm; FormGameState: TGameStatus;
-    FormWinner: TFigureColors; History: PStack): Boolean;
+    FormWinner: TFigureColors; History: PPointList): Boolean;
 
 Implementation
 
 {$R *.dfm}
 
 Function OpenEndProgramForm(Form: TForm; FormGameState: TGameStatus;
-    FormWinner: TFigureColors; History: PStack): Boolean;
+    FormWinner: TFigureColors; History: PPointList): Boolean;
 Begin
     With TEndGameForm.Create(Form) Do
         Try
             GameState := FormGameState;
-            GameStack := History;
+            GameList := History;
             Winner := FormWinner;
             ShowModal;
 
@@ -105,7 +105,7 @@ Begin
         Begin
             If Not IsFormatFile(Filename) Then
                 Filename := Filename + '.txt';
-            SaveNotationToFile(Gamestack, Filename);
+            SaveNotationToFile(GameList, Filename);
             Application.MessageBox('Notation has been saved!',
                 'Success', MB_OK Or MB_ICONINFORMATION);
         End;

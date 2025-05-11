@@ -80,7 +80,6 @@ End;
 Function SimpleCheckingForAvaible(Const Board: TBoardMatrix;
     X, Y, Dx, Dy: Integer): Boolean;
 Begin
-    SimpleCheckingForAvaible := False;
     If (Check(X + Dx, Board)) And (Check(Y + Dy, Board)) And
         CheckFigureColor(Board, X + Dx, Y + Dy, X, Y) And
         (Board[X + Dx, Y + Dy].Value <> -1) Then
@@ -186,10 +185,7 @@ Begin
         For Var J := Low(Board) To High(Board) Do
             With Board[I][J] Do
                 If (IsFigure) And (Color <> CurrentColor) Then
-                begin
-                var k :=Board[I][J]  ;
                     GetWaysFuntions[Figure](Board, J, I);
-                end;
 
 End;
 

@@ -140,7 +140,7 @@
             <Form>PownChangingForm</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="PointStack.pas"/>
+        <DCCReference Include="PointList.pas"/>
         <DCCReference Include="EndProgramFormUnit.pas">
             <Form>EndGameForm</Form>
             <FormType>dfm</FormType>

@@ -1,4 +1,4 @@
-Unit PointStack;
+Unit PointList;
 
 Interface
 
@@ -20,35 +20,35 @@ Type
         Next, Prev: PElement;
     End;
 
-    PStack = ^TStack;
+    PPointList = ^TPointList;
 
-    TStack = Record
+    TPointList = Record
         Head: PElement;
         First: PElement;
     End;
 
     TPointFile = File Of TPoints;
 
-Procedure DeleteStck(Stack: PStack);
-Procedure AddElement(Stack: PStack; X, Y: ShortInt; Figure: TFigures);
-Procedure PopElement(Stack: PStack);
-Function IsEmptyStack(Stack: PStack): Boolean;
+Procedure DeleteList(List: PPointList);
+Procedure AddElement(List: PPointList; X, Y: ShortInt; Figure: TFigures);
+Procedure PopElement(List: PPointList);
+Function IsEmptyList(List: PPointList): Boolean;
 
-Procedure SaveElementsToFile(Stack: PStack; Const Filepath: String);
-Procedure ImportElementsFromFile(Stack: PStack; Const Filepath: String);
+Procedure SaveElementsToFile(List: PPointList; Const Filepath: String);
+Procedure ImportElementsFromFile(List: PPointList; Const Filepath: String);
 
-Procedure SaveNotationToFile(Stack: PStack; Const Filepath: String);
+Procedure SaveNotationToFile(List: PPointList; Const Filepath: String);
 
 Implementation
 
-Procedure DeleteStck(Stack: PStack);
+Procedure DeleteList(List: PPointList);
 Begin
-    While Stack.First <> Nil Do
-        PopElement(Stack);
-    Dispose(Stack);
+    While List.First <> Nil Do
+        PopElement(List);
+    Dispose(List);
 End;
 
-Procedure AddElement(Stack: PStack; X, Y: ShortInt; Figure: TFigures);
+Procedure AddElement(List: PPointList; X, Y: ShortInt; Figure: TFigures);
 Var
     Element: PElement;
     Points: PPoints;
@@ -61,41 +61,41 @@ Begin
     New(Element);
     Element^.Value := Points;
 
-    If Stack^.Head = Nil Then
+    If List^.Head = Nil Then
     Begin
-        Stack^.Head := Element;
-        Stack^.First := Element;
+        List^.Head := Element;
+        List^.First := Element;
     End
     Else
     Begin
-        Element^.Prev := Stack^.Head;
-        Stack^.Head^.Next := Element;
-        Stack^.Head := Element;
+        Element^.Prev := List^.Head;
+        List^.Head^.Next := Element;
+        List^.Head := Element;
     End;
 End;
 
-Procedure PopElement(Stack: PStack);
+Procedure PopElement(List: PPointList);
 Var
     Temp: PElement;
     Points: PPoints;
 Begin
-    If Stack^.Head <> Nil Then
+    If List^.Head <> Nil Then
     Begin
-        Temp := Stack^.Head;
-        Stack^.Head := Temp^.Prev;
+        Temp := List^.Head;
+        List^.Head := Temp^.Prev;
         Dispose(Temp);
 
-        If Stack^.Head = Nil Then
-            Stack^.First := Nil;
+        If List^.Head = Nil Then
+            List^.First := Nil;
     End;
 End;
 
-Function IsEmptyStack(Stack: PStack): Boolean;
+Function IsEmptyList(List: PPointList): Boolean;
 Begin
-    IsEmptyStack := Stack^.First = Nil;
+    IsEmptyList := List^.First = Nil;
 End;
 
-Procedure SaveElementsToFile(Stack: PStack; Const Filepath: String);
+Procedure SaveElementsToFile(List: PPointList; Const Filepath: String);
 Var
     CurrentPoint: PElement;
     OFile: TPointFile;
@@ -104,7 +104,7 @@ Begin
     Rewrite(OFile);
     Seek(OFile, 0);
 
-    CurrentPoint := Stack^.First;
+    CurrentPoint := List^.First;
     While CurrentPoint <> Nil Do
     Begin
         Write(OFile, CurrentPoint^.Value^);
@@ -114,7 +114,7 @@ Begin
     CloseFile(OFile);
 End;
 
-Procedure SaveNotationToFile(Stack: PStack; Const Filepath: String);
+Procedure SaveNotationToFile(List: PPointList; Const Filepath: String);
 Var
     CurrentPoint: PElement;
     OFile: TextFile;
@@ -132,7 +132,7 @@ Begin
     Rewrite(OFile);
 
     i := 0;
-    CurrentPoint := Stack^.First;
+    CurrentPoint := List^.First;
     While CurrentPoint <> Nil Do
     Begin
         If CurrentPoint^.Value^.Figure <> FNone Then
@@ -156,12 +156,12 @@ Begin
     CloseFile(OFile);
 End;
 
-Procedure ImportElementsFromFile(Stack: PStack; Const Filepath: String);
+Procedure ImportElementsFromFile(List: PPointList; Const Filepath: String);
 Var
     OFile: TPointFile;
     Point: TPoints;
 Begin
-    If Stack^.First = Nil Then
+    If List^.First = Nil Then
     Begin
         AssignFile(OFile, Filepath);
         Reset(OFile);
@@ -170,7 +170,7 @@ Begin
         While Not EOF(OFile) Do
         Begin
             Read(OFile, Point);
-            AddElement(Stack, Point.X, Point.Y, Point.Figure);
+            AddElement(List, Point.X, Point.Y, Point.Figure);
         End;
 
         CloseFile(OFile);
