@@ -85,6 +85,8 @@ Begin
     InitializeBoard(Board);
 
     New(GameList);
+    GameList^.Head := nil;
+    GameList^.First := nil;
 
     ActiveUser := CWhite;
     GameStatus := GNone;
